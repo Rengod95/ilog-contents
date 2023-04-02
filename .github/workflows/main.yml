@@ -21,4 +21,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Sync to S3
-        run: aws s3 sync . s3://ilog-assets --exclude=".git/*" --exclude=".github/*" --exclude="README.md" --exclude=".DS_Store"
+        run: aws s3 sync . s3://ilog-assets --exclude=".git/*" --exclude=".github/*" --exclude="README.md" --exclude=".DS_Store" --exclude=".gitignore"
