@@ -1,6 +1,6 @@
 ---
 title : 데코레이터(Decorator)와 Class, 생성자 함수의 관계
-date: 2023/03/027
+date: 2023/03/27
 author: 이인
 tags: JavaScript, TypeScript, Decorator, Class, Prototype, HOC
 ---
