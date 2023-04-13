@@ -1,8 +1,8 @@
 ---
-title : 데코레이터(Decorator)와 Class 및 생성자 함수의 관계
+title: 데코레이터(Decorator)와 Class 및 생성자 함수의 관계
 date: 2023/03/27
 author: 이인
-tags: JavaScript, TypeScript, Decorator, Class, Prototype, HOC
+tags: ["JavaScript", "TypeScript", "Decorator", "Class", "Prototype", "HOC"]
 ---
 
 # 데코레이터의 의미
@@ -20,11 +20,12 @@ Angular.js, nest.js 등과 같은 프레임워크의 주요 철학 중 하나가
 외부 프레임워크에 대해서만 의미를 가지는 것이 아니라 단일 데코레이터가 가지는 의미는 거대하다. 그리고 그 의미를 조금이나마 이해하기 위해 자바스크립트에서의 데코레이터가 무엇인지, 어떤 역할을 하는지, 어떻게 동작하는지 등을 이해해보자.
 
 # 데코레이터란?
+
 데코레이터(Decorators)는 클래스, 메서드, 프로퍼티, 파라미터 등에 부가적인 기능을 추가할 수 있도록 해주는 문법이다.
 
 적어도 JS에서 데코레이터는 함수로 구현된다. higher-order-function 방식과 동일하게, 타겟을 함수로 감싸, 내부의 타겟이 참조할 수 있는 새로운 스코프를 만들어내고 이에 메타데이터 등을 추가하는 방식이다.
 
-여기서 말하는 타겟은 클래스, 메서드, 프로퍼티, 파라미터 등을 말합니다. 정의된 데코레이터 함수는  `@` 기호를 사용하여 표시합니다. 예를 들어, 클래스에 데코레이터를 적용하려면 다음과 같은 구문을 사용할 수 있다.
+여기서 말하는 타겟은 클래스, 메서드, 프로퍼티, 파라미터 등을 말합니다. 정의된 데코레이터 함수는 `@` 기호를 사용하여 표시합니다. 예를 들어, 클래스에 데코레이터를 적용하려면 다음과 같은 구문을 사용할 수 있다.
 
 ```js
 @decorator
@@ -33,13 +34,16 @@ class MyClass {
 }
 ```
 
-
 # 데코레이터의 구현
 
 가장 기본적인 형태의 데코레이터를 임의로 구현해 봅시다. JS에서 데코레이터 함수는 기본적으로 다음과 같은 형태로 구현된다.
 
 ```ts
-function myDecorator(target: any, key: string, descriptor?: PropertyDescriptor) {
+function myDecorator(
+  target: any,
+  key: string,
+  descriptor?: PropertyDescriptor
+) {
   // decorator implementation
 }
 ```
@@ -54,9 +58,9 @@ function myDecorator(target: any, key: string, descriptor?: PropertyDescriptor) 
 
 그래서 class의 상속과 확장 등의 개념을 채용하기 위해서는 기존의 프로토타입 기반 시스템을 기반으로 새로운 class 문법을 구현해야 했고, 그 결과물이 현재의 class 문법이다. 이 때 가장 중심이 되는 기능이 자바스크립트의 생성자 함수이다.
 
-생성자 함수를 살펴보기전 자바스크립트의 프로토타입 시스템에 대해 간단히 살펴보자. 
+생성자 함수를 살펴보기전 자바스크립트의 프로토타입 시스템에 대해 간단히 살펴보자.
 
-먼저 자바스크립트의 모든 객체는 프로토타입 객체가 존재한다. 그리고 이에 접근하기 위해서는 '[[prototype]]' 이라는 숨겨진 객체 프로퍼티가 존재하고 해당 객체를 통해 스코프 개념 및 프로토타입 체이닝 등이 가능하다. 해당 객체를 직접 get, set 하기 위해서는 __proto__  혹은  `Object.getPrototypeOf`나 `Object.setPrototypeOf` 등으로 접근할 수 있다.
+먼저 자바스크립트의 모든 객체는 프로토타입 객체가 존재한다. 그리고 이에 접근하기 위해서는 '[[prototype]]' 이라는 숨겨진 객체 프로퍼티가 존재하고 해당 객체를 통해 스코프 개념 및 프로토타입 체이닝 등이 가능하다. 해당 객체를 직접 get, set 하기 위해서는 **proto** 혹은  `Object.getPrototypeOf`나 `Object.setPrototypeOf` 등으로 접근할 수 있다.
 
 일반적인 객체와 달라 생성자 함수는 [[prototype]] 과는 다른 prototype 이라는 프로퍼티를 가진다. 이 때, new 문법을 통해 생성자 함수를 이용한 객체를 생성했다면, 해당 객체는 자신을 생성한 생성자 함수의 prototype 을 [[prototype]] 으로 가지게 된다.
 
@@ -81,7 +85,7 @@ function Rectangle(width, height) {
   this.height = height;
 }
 
-Rectangle.prototype.getArea = function() {
+Rectangle.prototype.getArea = function () {
   return this.width * this.height;
 };
 ```
@@ -93,12 +97,12 @@ Rectangle.prototype.getArea = function() {
 
 이제 데코레이터 함수의 각 argument가 의미하는 바를 다시 생각해보자.
 
-- `target`  : 데코레이터가 적용되는 대상의 생성자 함수. 클래스 멤버에 적용할 때는 해당 멤버의 생성자 함수가 된다. 클래스를 대상으로 사용하던, 클래스의 멤버를 대상으로 사용하던, 결국 동일한 생성자 함수의 [[prototype]] 객체를 레퍼런스 하는 객체이다.
--   `key` :  데코레이터가 적용되는 대상의 이름이다. 클래스 멤버에 적용할 때는 해당 멤버의 이름이된다.
--   `descriptor` (선택적): 데코레이터가 적용되는 대상의 프로퍼티 디스크립터. 클래스 멤버에 적용할 때만 사용된다. [[prototype]] 객체의 각 프로퍼티가 가지는 값은 순수한 value 외에도 화면 밖에 숨겨진 정보들이 있는데, 이런 정보들이 각 프로퍼티가 어떻게 작동할지를 정의한다.
+- `target` : 데코레이터가 적용되는 대상의 생성자 함수. 클래스 멤버에 적용할 때는 해당 멤버의 생성자 함수가 된다. 클래스를 대상으로 사용하던, 클래스의 멤버를 대상으로 사용하던, 결국 동일한 생성자 함수의 [[prototype]] 객체를 레퍼런스 하는 객체이다.
+- `key` : 데코레이터가 적용되는 대상의 이름이다. 클래스 멤버에 적용할 때는 해당 멤버의 이름이된다.
+- `descriptor` (선택적): 데코레이터가 적용되는 대상의 프로퍼티 디스크립터. 클래스 멤버에 적용할 때만 사용된다. [[prototype]] 객체의 각 프로퍼티가 가지는 값은 순수한 value 외에도 화면 밖에 숨겨진 정보들이 있는데, 이런 정보들이 각 프로퍼티가 어떻게 작동할지를 정의한다.
 
 ```js
-console.log(Object.getOwnPropertyDescriptor(oatmeal, 'viscosity'));
+console.log(Object.getOwnPropertyDescriptor(oatmeal, "viscosity"));
 
 /* 결과 :
 {
@@ -111,20 +115,20 @@ console.log(Object.getOwnPropertyDescriptor(oatmeal, 'viscosity'));
 ```
 
 각 속성의 의미는 다음과 같다.
--   `구성 가능(configurable)`은 속성 유형을 변경하거나, 객체에서 속성을 삭제할 수 있는지를 결정한다.
--   `열거 가능(enumerable)`은 `Object.keys(oatmeal)`를 호출하거나 `for` 루프에서 사용할 때처럼 객체의 속성을 열거할 때 속성을 표시할지 여부를 제어한다.
--   `쓰기 가능(writable)`은 할당 연산자 `=`를 통해 속성값을 변경할 수 있는지를 제어한다.
--   `값(value)`은 접근할 때 표시되는 속성의 정적 값이다. 속성 설명자 중에 유일하게 쉽게 볼 수 있고, 주로 우리가 관심을 두고 보는 부분이다. 함수를 포함한 모든 자바스크립트의 값이 올 수 있으며, 이 속성은 속성을 자신이 속한 객체의 메소드로 만든다.
 
-속성 설명자에는 다른  두 가지 속성 getter와 setter도 존재한다.
+- `구성 가능(configurable)`은 속성 유형을 변경하거나, 객체에서 속성을 삭제할 수 있는지를 결정한다.
+- `열거 가능(enumerable)`은 `Object.keys(oatmeal)`를 호출하거나 `for` 루프에서 사용할 때처럼 객체의 속성을 열거할 때 속성을 표시할지 여부를 제어한다.
+- `쓰기 가능(writable)`은 할당 연산자 `=`를 통해 속성값을 변경할 수 있는지를 제어한다.
+- `값(value)`은 접근할 때 표시되는 속성의 정적 값이다. 속성 설명자 중에 유일하게 쉽게 볼 수 있고, 주로 우리가 관심을 두고 보는 부분이다. 함수를 포함한 모든 자바스크립트의 값이 올 수 있으며, 이 속성은 속성을 자신이 속한 객체의 메소드로 만든다.
 
--   `get`은 정적인 `value` 대신 반환 값을 전달하는 함수이다.
--   `set`은 속성에 값을 할당할 때, 등호 오른쪽에 넣는 모든 것을 인자로 전달하는 특수 함수이다.
+속성 설명자에는 다른 두 가지 속성 getter와 setter도 존재한다.
 
+- `get`은 정적인 `value` 대신 반환 값을 전달하는 함수이다.
+- `set`은 속성에 값을 할당할 때, 등호 오른쪽에 넣는 모든 것을 인자로 전달하는 특수 함수이다.
 
 # 함수 대상의 데코레이터
 
-데코레이터 문법은 원래 일반적인 함수를 대상으로 하는 것이 아니다. 기존에 구현된 함수의 구현을 수정하지 않고 새로운 내용을 추가하고 싶다면 대안이 많고 그 중 하나가 HOF(Higher-Order-Function)이다. 
+데코레이터 문법은 원래 일반적인 함수를 대상으로 하는 것이 아니다. 기존에 구현된 함수의 구현을 수정하지 않고 새로운 내용을 추가하고 싶다면 대안이 많고 그 중 하나가 HOF(Higher-Order-Function)이다.
 
 결국 데코레이터라는 문법은 결과적으로는 클래스의 동작을 변경하지만 사실 데코레이터라는 래퍼 함수를 통해 참조할 수 있는 새로운 스코프를 만들어 내고 해당 스코프를 이용해 프로토타입 객체를 조작하는 방식이다.
 
@@ -142,8 +146,10 @@ HOF 도 일부 동일하다. 래퍼함수를 통해 새로운 스코프를 만�
 function log(target: any, key: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value;
 
-  descriptor.value = function(...args: any[]) {
-    console.log(`Method '${key}' called with arguments: ${JSON.stringify(args)}`);
+  descriptor.value = function (...args: any[]) {
+    console.log(
+      `Method '${key}' called with arguments: ${JSON.stringify(args)}`
+    );
     const result = originalMethod.apply(this, args);
     console.log(`Method '${key}' returned: ${JSON.stringify(result)}`);
     return result;
@@ -164,7 +170,6 @@ calc.add(1, 2);
 // Output:
 // Method 'add' called with arguments: [1,2]
 // Method 'add' returned: 3
-
 ```
 
 Calculator 라는 클래스의 클래스 멤버인 add에 데코레이터를 적용한 모습이다.
@@ -185,10 +190,9 @@ multiply(2, 3);
 
 보다시피 value를 참조하지 못한다.
 
-multiply 함수의 생성자함수인 Function의 prototype 객체에는 자바스크립트의 함수가 사용할 수 있는 공통된 프로퍼티들이 정의되어 있다. 
+multiply 함수의 생성자함수인 Function의 prototype 객체에는 자바스크립트의 함수가 사용할 수 있는 공통된 프로퍼티들이 정의되어 있다.
 
 이 때 descriptor는 Function.prototype 의 multiply 라는 아이템을 참조하려고 시도할 것이다. 당연히 Function.prototype에는 multiply 라는 프로퍼티가 존재하지 않기 때문에 레퍼런스 에러가 발생한다.
-
 
 위 예시를 통해 일반적인 데코레이터는 클래스와 클레스 멤버에 대해서 사용하는 것이 안전하다고 결론낼 수 있다.
 
@@ -202,16 +206,21 @@ multiply와 같은 함수의 경우 데코레이터 대신 같은 역할을 해�
 function log(target: Function) {
   const originalFunction = target;
 
-  const newFunction = function(...args: any[]) {
-    console.log(`Function '${originalFunction.name}' called with arguments: ${JSON.stringify(args)}`);
+  const newFunction = function (...args: any[]) {
+    console.log(
+      `Function '${
+        originalFunction.name
+      }' called with arguments: ${JSON.stringify(args)}`
+    );
     const result = originalFunction.apply(this, args);
-    console.log(`Function '${originalFunction.name}' returned: ${JSON.stringify(result)}`);
+    console.log(
+      `Function '${originalFunction.name}' returned: ${JSON.stringify(result)}`
+    );
     return result;
   };
 
   return newFunction;
 }
-
 ```
 
 target의 타입이 Function으로 고정된 것을 확인할 수 있다. 근데 위 코드는 우리가 어디서 많이 보던 패턴과 유사하다. 맞다 바로 HOF 방식과 일치한다. 즉 데코레이터를 함수를 대상으로 사용하려고 시도하면 결국 HOF의 형태로 작성될 수 밖에 없다.다만 @을 통해 가시성이나 코드 작성에 대한 편리한 부분 등의 장점을 취할 수 있다.

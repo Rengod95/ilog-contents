@@ -1,8 +1,8 @@
 ---
-title : Race Condition 과 UseEffect
+title: Race Condition 과 UseEffect
 date: 2023/03/17
 author: 이인
-tags: JavaScript, TypeScript, useEffect, Race Condition, React
+tags: ["JavaScript", "TypeScript", "useEffect", "Race Condition", "React"]
 ---
 
 비동기 함수는 데이터 패칭이 완료되는 순서를 보장할 수 없다.
@@ -22,62 +22,58 @@ tags: JavaScript, TypeScript, useEffect, Race Condition, React
 
 그렇다면 어떤 방식으로 이 문제에 접근해야 할까
 
-1. API 호출에 대해 신경쓰지 않고, 컴포넌트 자체에서 연속된 데이터 요청에 대응하여 UI 처리를 진행한다. 
+1. API 호출에 대해 신경쓰지 않고, 컴포넌트 자체에서 연속된 데이터 요청에 대응하여 UI 처리를 진행한다.
+
 ```js
 import React, { useEffect, useState } from "react";
 
 export default function Post(props) {
+  const [data, setData] = useState(null);
+  let shouldRender = true;
 
-	const [data, setData] = useState(null);
-	let shouldRender = true;
+  useEffect(() => {
+    if (props.id == null) {
+      setData(null);
+      return;
+    }
 
-	useEffect(() => {
-		if (props.id == null) {
-		setData(null);
-		return;
-		}
-	
-		const fetchData = async () => {
-			if (props.id === 1) {
-				await delay(2000);
-			}
-			const newData = await fetch('URL').then((response) => {
-				console.log("데이터 패칭 완료", props.id);
-				return response.json();
-			});
-			if (shouldRender) {
-				setData(newData);
-			}
-		};
-		
-		fetchData();
-		
-		return () => {
-			console.log(props.id, "캔슬");
-			shouldRender = false;
-		};
-		
-	}, [props.id]);
+    const fetchData = async () => {
+      if (props.id === 1) {
+        await delay(2000);
+      }
+      const newData = await fetch("URL").then((response) => {
+        console.log("데이터 패칭 완료", props.id);
+        return response.json();
+      });
+      if (shouldRender) {
+        setData(newData);
+      }
+    };
 
-	if (data) {
-		return (
-			<div>
-				<h2> postID: {data.id} </h2>
-				<h1> {data.title} </h1>
-				<p> {data.body} </p>
-			</div>
-			);
+    fetchData();
 
-	} else {
-		return <div>noting</div>;
-	}
+    return () => {
+      console.log(props.id, "캔슬");
+      shouldRender = false;
+    };
+  }, [props.id]);
 
+  if (data) {
+    return (
+      <div>
+        <h2> postID: {data.id} </h2>
+        <h1> {data.title} </h1>
+        <p> {data.body} </p>
+      </div>
+    );
+  } else {
+    return <div>noting</div>;
+  }
 }
 
 function delay(time) {
-	return new Promise((resolve) => setTimeout(resolve, time));
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
-
 ```
 
 ![](https://i.imgur.com/Ms3yGCD.png)
@@ -95,58 +91,57 @@ https://developer.mozilla.org/en-US/docs/Web/API/AbortController
 import React, { useEffect, useState } from "react";
 
 export default function Post(props) {
-  const [data, setData] = useState(null)
-  const abortController = new AbortController()
+  const [data, setData] = useState(null);
+  const abortController = new AbortController();
 
   useEffect(() => {
-    if(props.id == null){
-      setData(null)
-      return
+    if (props.id == null) {
+      setData(null);
+      return;
     }
 
     const fetchData = async () => {
+      if (props.id === 1) {
+        await delay(2000);
+      }
 
-        if(props.id === 1){
-          await delay(2000)
-        }
-
-        try{
-          const response = await fetch(
-            `https://jsonplaceholder.typicode.com/posts/${props.id}/`, {
-              signal: abortController.signal
-            }
-          );
-          const newData = await response.json();
-          setData(newData);
-        } catch(error){
-          if(error.name === 'AbortError'){
-            // do something
+      try {
+        const response = await fetch(
+          `https://jsonplaceholder.typicode.com/posts/${props.id}/`,
+          {
+            signal: abortController.signal,
           }
+        );
+        const newData = await response.json();
+        setData(newData);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          // do something
         }
+      }
     };
 
     fetchData();
 
     return () => {
-      abortController.abort()
-    }
-  }, [props.id])
+      abortController.abort();
+    };
+  }, [props.id]);
 
-  if (data){
+  if (data) {
     return (
       <div>
         <h2> postID: {data.id} </h2>
         <h1> {data.title} </h1>
         <p> {data.body} </p>
       </div>
-    )
+    );
   } else {
-    return <div>noting</div>
+    return <div>noting</div>;
   }
 }
 
 function delay(time) {
-  return new Promise(resolve => setTimeout(resolve, time));
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
-
 ```
