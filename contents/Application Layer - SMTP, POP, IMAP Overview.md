@@ -1,5 +1,5 @@
 ---
-title : Application Layer - Mail Overview
+title : Application Layer - SMTP, POP, IMAP Overview
 date: 2023/04/20
 tags: ["Email","SMTP","POP", "IMAP", "Network", '네트워크','Application Layer']
 ---
