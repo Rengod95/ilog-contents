@@ -1,5 +1,5 @@
 ---
-title : React, Next.js SVGR 을 이용 해 효율적인 image asset 관리하기 - (Learning Mate)
+title : React Next.js에서 SVGR을 이용해 효율적인 image asset 관리하기
 date: 2023/05/08
 author: 이인
 tags: [next.js, React, svg, svgr, png, webpack]
