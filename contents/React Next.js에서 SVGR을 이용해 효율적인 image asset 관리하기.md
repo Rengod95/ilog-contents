@@ -54,7 +54,7 @@ SVG 파일 YML 텍스트로 작성되기에, 픽셀 기반의 PNG 파일보다�
 
 일반적으로 리액트 혹은 리액트를 기반으로 하는 웹 프레임워크에서 SVG 를 사용하려면, 단순히 import를 통해 컴포넌트로 만들 수 있다.
 
-```js
+```jsx
 import { ReactComponent as Logo } from './logo.svg';
 
 function App() {
@@ -108,10 +108,10 @@ import 된 SVG 모듈을 리액트 컴포넌트로 사용할 수 있는 이유�
 
 최적화를 위해 각 이미지 에셋을 Lazy Loading 방식으로 사용해야 하는 경우가 생긴다.
 
-이 때, **SVG 파일을 사용하려는 컴포넌트** 내부에서 Lazy loading 과 Suspense 를 매번 처리해주어야 한다.
+이 때, SVG 파일을 사용하려는 컴포넌트 내부에서 Lazy loading 과 Suspense 를 매번 처리해주어야 한다.
 
-```js
-// App.js
+```jsx
+// App.jsx
 import React, { lazy, Suspense } from 'react';
 
 const Logo = lazy(() => import('./logo')); // 1
@@ -120,7 +120,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Suspense fallback={<div>Loading...</div>}> 
+        <Suspense fallback={<div>Loading..</div>}> 
           <Logo />
         </Suspense>
       </header>
@@ -141,7 +141,7 @@ export default App;
 
 대규모 프로젝트에서 여러개의 이미지 이름을 리터럴 타입을 매번 수정하기도 힘들 뿐더러, 지정하더라도 IDE 의 타입 추천 시스템을 활용할 수 없다.
 
-```js
+```jsx
 import React from 'react'
 import Icon from './Icon'
 
@@ -165,7 +165,7 @@ export const App = () => { // 실제 Image name 은 Logo
 
 해당 문제에 있어 가장 중요했던건, 프로젝트의 모든 SVG 에셋을 통합하여 관리하는 추상화된 컴포넌트가 필요했다. 해당 컴포넌트는 다음과 같은 요구사항을 가진다.
 
-1. viewport의 width, height 및 viewbox 사이즈와 fill 외에도 리액트에서 일반적으로 SVG에 대해 제공하는 모든 props(HTMLAttributes<SVGSVGElement/>)를 전달받을 수 있어야 한다.
+1. viewport의 width, height 및 viewbox 사이즈와 fill 외에도 리액트에서 일반적으로 SVG에 대해 제공하는 모든 props를 전달받을 수 있어야 한다.
 2. LazyLoading을 위한 Import 및 Suspense 코드 작성이 해당 컴포넌트를 사용하려는 외부 컴포넌트가 아닌 해당 컴포넌트의 내부에서 관리되어야 한다.
 3. 통합 관리하는 모든 SVG에 대해 typing 가능해야 한다.
 4. 변경에 유연하게 대응할 수 있어야 한다
@@ -179,7 +179,7 @@ export const App = () => { // 실제 Image name 은 Logo
 
 SVG들의 path 값만 추출해 객체로 관리하기 위해 따로 모듈을 하나 만들어 준다.
 
-```js
+```ts
 
 //SVGIcon.DATA.ts
 import { ViewBoxSize } from './SVGIcon.types';
@@ -212,7 +212,7 @@ export const ICON_SET: Record<IconName, IconData> = {
 
 props 로 전달된 icon name에 맞는 객체의 속성을 불러오는 함수를 구현한다. 외에도 viewbox, viewport 사이즈를 적용하기 위한 여러 함수를 작성한다. 마찬가지로 문제가 많은 함수이다.. 
 
-```js
+```ts
 import { ViewPortObject, ViewBoxObject, ViewBoxString } from '.';
 import { ICON_SET, IconName, ViewPortSize, ViewBoxSize, IconData } from '.';
 
@@ -258,7 +258,7 @@ export const getIconData = (iconName: IconName): IconData => {
 
 ### SVGIcon.tsx
 앞서 구현했던 함수를 통해 ICON_SET 객체를 통해 통합된 SVG 에셋을 추출하여 사용하는 컴포넌트를 구현합니다.
-```js
+```tsx
 import React from 'react';
 import {
   IconName,
@@ -445,7 +445,7 @@ yarn add @svgr/cli
 ![](https://i.imgur.com/UAE2wMC.png)
 그리고 개별 컴포넌트를 뜯어보면 svgr.config에서 설정했던 template 과 동일하게 파싱되었음을 알 수 있다.
 
-```js
+```tsx
 // svg -> tsx 로 파싱된 컴포넌트
 import * as React from 'react';
 import { SVGProps } from 'react';
@@ -494,7 +494,7 @@ export default SvgFaceBad;
 
 이제 파싱된 모든 컴포넌트를 하나의 에셋으로 관리하기 위해 registry 객체를 생성해서, dynamic import 방식으로 등록해보자.
 
-```js
+```ts
 export const SVGIconRegistry = {
   ExplorerIcon: () => import('./templates/ExplorerIcon'),
   GradientCircleIcon: () => import('./templates/GradientCircleIcon'),
@@ -521,7 +521,7 @@ export type IconRegistryKey = keyof typeof SVGIconRegistry;
 
 ## registry, templates 를 기반으로 SVGIcon.tsx 리펙터링
 
-```js
+```tsx
 import React, { Suspense } from 'react';
 import { IconRegistryKey, SVGIconRegistry } from '@/components/UI/SVGIcon/SVGIcon.registry';
 import { ViewBoxSize } from '@/components/UI/SVGIcon/SVGIcon.types';
