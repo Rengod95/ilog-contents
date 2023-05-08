@@ -54,26 +54,11 @@ SVG 파일 YML 텍스트로 작성되기에, 픽셀 기반의 PNG 파일보다�
 
 일반적으로 리액트 혹은 리액트를 기반으로 하는 웹 프레임워크에서 SVG 를 사용하려면, 단순히 import를 통해 컴포넌트로 만들 수 있다.
 
-```jsx
-import { ReactComponent as Logo } from './logo.svg';
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <Logo />
-      </header>
-    </div>
-  );
-}
-
-export default App;
-
-```
-
 이게 가능한 이유는 webpack 덕분이다.
 
 기본적으로, React 프로젝트의 구성에서 Webpack이 사용되면 file-loader 또는 url-loader 등의 로더를 사용하여 이미지, 폰트, SVG 등의 파일들을 처리하도록 설정되는데, 이 때 JavaScript 모듈로 변환하여 처리한다.
+
+/코드
 
 결국 SVG 파일이 모듈화 되기 때문에 프로젝트 내에서 SVG 파일을 직접 import하고 활용할 수 있다.
 
@@ -110,26 +95,7 @@ import 된 SVG 모듈을 리액트 컴포넌트로 사용할 수 있는 이유�
 
 이 때, SVG 파일을 사용하려는 컴포넌트 내부에서 Lazy loading 과 Suspense 를 매번 처리해주어야 한다.
 
-```jsx
-// App.jsx
-import React, { lazy, Suspense } from 'react';
-
-const Logo = lazy(() => import('./logo')); // 1
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <Suspense fallback={<div>Loading..</div>}> 
-          <Logo />
-        </Suspense>
-      </header>
-    </div>
-  );
-}
-
-export default App;
-```
+/코드
 
 해당 파일을 사용하는 컴포넌트의 관점에서는, 단지 해당 이미지 컴포넌트를 사용하기 위해, 별도의 Boilerplate 코드를 매번 작성해 주어야 하는 셈이고, 필자는 이런 방식이 책임의 분리가 옳바르게 이루어지지 않았다고 본다.
 
@@ -141,20 +107,7 @@ export default App;
 
 대규모 프로젝트에서 여러개의 이미지 이름을 리터럴 타입을 매번 수정하기도 힘들 뿐더러, 지정하더라도 IDE 의 타입 추천 시스템을 활용할 수 없다.
 
-```jsx
-import React from 'react'
-import Icon from './Icon'
-
-export const App = () => { // 실제 Image name 은 Logo
-	return (
-		<div>
-			<Icon name={'Loogo'}></Icon> 
-		</div>
-	)
-}
-
-
-```
+/코드
 
 위 코드 처럼 잘못된 string literal 전달에 대해서 런타임 이전에 확인할 수 없는 문제가 있었다.
 
@@ -179,32 +132,7 @@ export const App = () => { // 실제 Image name 은 Logo
 
 SVG들의 path 값만 추출해 객체로 관리하기 위해 따로 모듈을 하나 만들어 준다.
 
-```ts
-
-//SVGIcon.DATA.ts
-import { ViewBoxSize } from './SVGIcon.types';
-
-//icon name string literal
-export type IconName = 'nav_home' | 'nav_setting';
-
-export interface IconData {
-  path: string;
-  viewBoxSize: ViewBoxSize;
-  [key: string]: any;
-}
-
-export const ICON_SET: Record<IconName, IconData> = {
-  nav_home: {
-    path: 'path value',
-    viewBoxSize: '0 0 24 24',
-  },
-  nav_setting: {
-    path: 'path value',
-    viewBoxSize: '0 0 22 24',
-  },
-};
-
-```
+/코드
 
 이런식으로 ICON_SET 객체는 각 SVG의 path 와 기본 viewBox 사이즈를 속성으로 가지고, 추가적으로 필요한 속성이 있을 경우 등록할 수 있도록 타입을 정의했다.(문제가 많은 타입입니다..)
 
@@ -212,108 +140,12 @@ export const ICON_SET: Record<IconName, IconData> = {
 
 props 로 전달된 icon name에 맞는 객체의 속성을 불러오는 함수를 구현한다. 외에도 viewbox, viewport 사이즈를 적용하기 위한 여러 함수를 작성한다. 마찬가지로 문제가 많은 함수이다.. 
 
-```ts
-import { ViewPortObject, ViewBoxObject, ViewBoxString } from '.';
-import { ICON_SET, IconName, ViewPortSize, ViewBoxSize, IconData } from '.';
-
-const DEFAULT_VIEW_PORT_SIZE: ViewPortObject = { width: 100, height: 100 };
-const DEFAULT_VIEW_BOX_SIZE: ViewBoxObject = { minX: 0, minY: 0, width: 24, height: 24 };
-const DEFAULT_ICON_COLOR = 'black';
-
-// IconSize(ViewPort Size)를 결정해주는 함수, 사용자가 단일 number로 사이즈를 입력할 수 있도록 타입체킹
-export const setViewPortSize = (size: ViewPortSize): ViewPortObject => {
-  if (typeof size === 'number') {
-    return { width: size, height: size };
-  }
-  return size || DEFAULT_VIEW_PORT_SIZE;
-};
-
-// ViewBox Size를 결정해주는 함수, icon 자체의 ViewBoxSize가 아닌 임의의 Size를 입력할 수 있도록 타입체킹
-// 임의의 size 값을 전달받은경우 최우선으로 적용하도록 작성 외에는 iconName에 따른 사이즈 값 반환
-export const setViewBoxSize = (size: ViewBoxSize, iconName: IconName): ViewBoxObject => {
-  const IconViewBoxSize = ICON_SET[iconName].viewBoxSize;
-
-  //undefined
-  if (!IconViewBoxSize) {
-    return DEFAULT_VIEW_BOX_SIZE;
-  }
-
-  //ViewBoxString
-  if (typeof IconViewBoxSize === 'string') {
-    const parsed = IconViewBoxSize.split(' ').map((val) => Number(val));
-    return { minX: parsed[0], minY: parsed[1], width: parsed[2], height: parsed[3] };
-  }
-
-  //ViewBoxObject
-  return IconViewBoxSize;
-};
-
-export const getIconData = (iconName: IconName): IconData => {
-  const icon_data = ICON_SET[iconName];
-  console.log(icon_data);
-  return icon_data;
-};
-```
-
+/코드
 
 ### SVGIcon.tsx
 앞서 구현했던 함수를 통해 ICON_SET 객체를 통해 통합된 SVG 에셋을 추출하여 사용하는 컴포넌트를 구현합니다.
-```tsx
-import React from 'react';
-import {
-  IconName,
-  ViewBoxSize,
-  ViewPortSize,
-  getIconData,
-  setViewBoxSize,
-  setViewPortSize,
-} from '.';
 
-export type SVGIconProps = {
-  iconName: IconName;
-  size?: ViewPortSize;
-  viewboxsize?: ViewBoxSize;
-  color?: string;
-  onClick?: (args: unknown) => void;
-};
-
-export const SVGIcon = React.memo(function SVGIcon({
-  size,
-  viewboxsize,
-  iconName,
-  color,
-  onClick,
-}: SVGIconProps) {
-  const {
-    minX,
-    minY,
-    width: viewBoxWidth,
-    height: viewBoxHeight,
-  } = React.useMemo(() => setViewBoxSize(viewboxsize, iconName), [viewboxsize, iconName]);
-  //viewBoxSize
-  const { width: iconWidth, height: iconHeight } = React.useMemo(
-    () => setViewPortSize(size),
-    [size]
-  );
-  // path to be drawn
-  const icon_data = React.useMemo(() => getIconData(iconName), [iconName]);
-
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={iconWidth}
-      height={iconHeight}
-      fill="none"
-      viewBox={`${minX} ${minY} ${viewBoxWidth} ${viewBoxHeight}`}
-      onClick={onClick}>
-      <path fill={color} d={icon_data.path} {...icon_data}></path>
-    </svg>
-  );
-});
-
-export default SVGIcon;
-```
-
+/코드
 
 ## 1차 구현의 문제
 
@@ -342,81 +174,15 @@ yarn add @svgr/webpack
 
 해당 명령어를 통해 프로젝트 레벨에서 svgr 플러그인을 설치한다. 이후, svgr의 configuration을 조정하여 svg -> tsx 로 파싱하는 과정에서 원하는 형태의 tsx로 추출할 수 있도록 템플릿을 변경한다.
 
-```js
-// svgr.config.js
+/코드
 
-const dynamicTitlePlugin = require('./plugins/svg-dynamic-title-plugin');
-
-const template = ({ componentName, jsx, props, imports, exports, interfaces }, { tpl }) =>
-  tpl`
-  ${imports}
-  import {ViewBoxSize} from '../SVGIcon.types';
-  import styled from '@emotion/styled'
-  ${interfaces}
-  
-  const Base =  ({ width, height, title, viewBox = '0 0 24 24', fill='none', ...props}: SVGProps\<
-    SVGSVGElement> & 
-    {width: number | string, height:number | string, title: string, viewBox?:ViewBoxSize, fill?:string}) => {
-    return (${jsx})
-  }
-  
-export const ${componentName} = styled(Base)\`
-  & path {
-    fill: $\{({ fill }) => fill};
-  }
-\`;
-
-export default ${componentName};
-`;
-
-module.exports = {
-  template,
-  svgProps: {
-    height: '{height}',
-    width: '{width}',
-    fill: '{fill}',
-    viewBox: '{viewBox}',
-  },
-};
-
-```
 자체적으로 제공하는 componentName 과 tpl을 통해 파싱된 svg 컴포넌트의 props를 미리 지정해 두었다.
 
 ## next.config.js 수정
 
 next.js 를 사용하고 있기 때문에, 내장된 파일로더가 svg 를 모듈로 만들지 않고, 프로젝트 레벨의 svgr 플러그인이 모듈화 하도록 next.config.js 의 config 객체에 다음과 같은 규칙을 추가한다. 다만 특수한 경우에는 기존의 파일로더가 처리하도록 설정한다.
 
-
-```js
-
-const config = {
-webpack(config) {
-    // Grab the existing rule that handles SVG imports
-    const fileLoaderRule = config.module.rules.find((rule) => rule.test?.test?.('.svg'));
-
-    config.module.rules.push(
-      // Reapply the existing rule, but only for svg imports ending in ?url
-      {
-        ...fileLoaderRule,
-        test: /\.svg$/i,
-        resourceQuery: /url/, // *.svg?url
-      },
-      // Convert all other *.svg imports to React components
-      {
-        test: /\.svg$/i,
-        issuer: /\.[jt]sx?$/,
-        resourceQuery: { not: /url/ }, // exclude if *.svg?url
-        use: ['@svgr/webpack'],
-      }
-    );
-
-    // Modify the file loader rule to ignore *.svg, since we have it handled now.
-    fileLoaderRule.exclude = /\.svg$/i;
-
-    return config;
-  },
-}
-```
+/코드
 
 ## script 등록하기
 
@@ -428,15 +194,7 @@ yarn add @svgr/cli
 
 이후 script 에 다음과 같은 명령어를 등록해준다.
 
-```json
-{
-"scripts": {
-    "build:svg": "npx svgr public/icons -d src/components/UI/SVGIcon/templates --typescript",
-
-  },
-}
-
-```
+/코드
 
 문법은 'npx svgr [source directory] -d [destination directory]' 와 같다.
 
@@ -445,117 +203,19 @@ yarn add @svgr/cli
 ![](https://i.imgur.com/UAE2wMC.png)
 그리고 개별 컴포넌트를 뜯어보면 svgr.config에서 설정했던 template 과 동일하게 파싱되었음을 알 수 있다.
 
-```tsx
-// svg -> tsx 로 파싱된 컴포넌트
-import * as React from 'react';
-import { SVGProps } from 'react';
-import { ViewBoxSize } from '../SVGIcon.types';
-import styled from '@emotion/styled';
-const Base = ({
-  width,
-  height,
-  title,
-  viewBox = '0 0 24 24',
-  fill = 'none',
-  ...props
-}: SVGProps<SVGSVGElement> & {
-  width: number | string,
-  height: number | string,
-  title: string,
-  viewBox?: ViewBoxSize,
-  fill?: string,
-}) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={width}
-      height={height}
-      fill={fill}
-      viewBox={viewBox}
-      {...props}>
-      <path
-        fill="#B1B5C4"
-        d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10c-.006 5.52-4.48 9.994-10 10Zm0-18a8 8 0 1 0 8 8 8.009 8.009 0 0 0-8-8Zm-3.5 8a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm6.993-.014a1.493 1.493 0 1 1 0-2.986 1.493 1.493 0 0 1 0 2.986Z"
-      />
-      <path stroke="#B1B5C3" strokeWidth={2} d="M8 16.5a8.944 8.944 0 0 1 8 0" />
-    </svg>
-  );
-};
-export const SvgFaceBad = styled(Base)`
-  & path {
-    fill: ${({ fill }) => fill};
-  }
-`;
-export default SvgFaceBad;
-```
-
+/ 코드
 
 ## registry 객체에 컴포넌트 등록하기
 
 이제 파싱된 모든 컴포넌트를 하나의 에셋으로 관리하기 위해 registry 객체를 생성해서, dynamic import 방식으로 등록해보자.
 
-```ts
-export const SVGIconRegistry = {
-  ExplorerIcon: () => import('./templates/ExplorerIcon'),
-  GradientCircleIcon: () => import('./templates/GradientCircleIcon'),
-  GradientPenIcon: () => import('./templates/GradientPenIcon'),
-  MessageIcon: () => import('./templates/MessageIcon'),
-  MicrophoneIcon: () => import('./templates/MicrophoneIcon'),
-  NavHomeIcon: () => import('./templates/NavHomeIcon'),
-  NavSettingIcon: () => import('./templates/NavSettingIcon'),
-  PauseIcon: () => import('./templates/PauseIcon'),
-  RecordIcon: () => import('./templates/RecordIcon'),
-  HeaderBackArrow: () => import('./templates/HeaderBackArrow'),
-  faceWorst: () => import('./templates/FaceWorst'),
-  faceBad: () => import('./templates/FaceBad'),
-  faceNormal: () => import('./templates/FaceNormal'),
-  faceGood: () => import('./templates/FaceGood'),
-  faceBest: () => import('./templates/FaceBest'),
-};
-
-export type IconRegistryKey = keyof typeof SVGIconRegistry;
-
-```
+/코드
 
 이렇게 함으로써 객체의 모든 키값을 타입으로 추출할 수 있고, 추출된 키 타입들은 이후 SVGIcon 의 name props의 타입으로 사용할 수 있다. 이렇게 하면 IDLE 에서 타입 추천을 못하던 문제를 해결하고, 런타임 이전에 잘못된 props 전달로 발생하는 오류를 잡아 체계적이고 안전하게 관리할 수 있다.
 
 ## registry, templates 를 기반으로 SVGIcon.tsx 리펙터링
 
-```tsx
-import React, { Suspense } from 'react';
-import { IconRegistryKey, SVGIconRegistry } from '@/components/UI/SVGIcon/SVGIcon.registry';
-import { ViewBoxSize } from '@/components/UI/SVGIcon/SVGIcon.types';
-
-export type SVGIconProps = {
-  name: IconRegistryKey;
-  width: string | number;
-  height: string | number;
-  viewBox?: ViewBoxSize;
-  fill?: string;
-  onClick?: (...args: any) => void;
-} & React.HTMLAttributes<SVGSVGElement>;
-
-const RenderLoader = () => <div></div>;
-
-export const SVGIcon = ({ name, width, height, viewBox, fill, ...props }: SVGIconProps) => {
-  const Component = React.useMemo(() => React.lazy(SVGIconRegistry[name]), [name]);
-  return (
-    <Suspense fallback={<RenderLoader />}>
-      <Component
-        width={width}
-        height={height}
-        title={name}
-        {...props}
-        fill={fill}
-        viewBox={viewBox}
-      />
-    </Suspense>
-  );
-};
-
-export default SVGIcon;
-
-```
+/코드
 
 React.lazy와 suspense를 통해 컴포넌트 내부에서 lazy loading 에 대해 자체적으로 처리하고 모든 SVG에 대해 개별이 아닌 통합으로 처리하게 되었다.
 
